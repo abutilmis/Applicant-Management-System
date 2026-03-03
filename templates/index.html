@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Dashboard</h1>
+<div class="row">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary mb-3">
+            <div class="card-header">Total Applicants</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ stats.total_applicants }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success mb-3">
+            <div class="card-header">Unique Applicants</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ stats.unique_applicants }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning mb-3">
+            <div class="card-header">Called for Interview</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ stats.called }}</h5>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-info mb-3">
+            <div class="card-header">Passed for Work</div>
+            <div class="card-body">
+                <h5 class="card-title">{{ stats.passed }}</h5>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Quick Actions</div>
+            <div class="card-body">
+                <a href="{{ url_for('upload') }}" class="btn btn-primary">Upload New File</a>
+                <a href="{{ url_for('applicants') }}" class="btn btn-secondary">View Applicants</a>
+                <a href="{{ url_for('statistics') }}" class="btn btn-info">View Statistics</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">Database Management</div>
+            <div class="card-body">
+                <form action="{{ url_for('manage_database') }}" method="post" style="display:inline;">
+                    <input type="hidden" name="action" value="refresh">
+                    <button type="submit" class="btn btn-outline-secondary">Refresh</button>
+                </form>
+                <form action="{{ url_for('manage_database') }}" method="post" style="display:inline;">
+                    <input type="hidden" name="action" value="undo_last">
+                    <button type="submit" class="btn btn-outline-warning" onclick="return confirm('Undo last upload?')">Undo Last</button>
+                </form>
+                <form action="{{ url_for('manage_database') }}" method="post" style="display:inline;">
+                    <input type="hidden" name="action" value="reset_all">
+                    <button type="submit" class="btn btn-outline-danger" onclick="return confirm('Reset entire database? This cannot be undone.')">Reset All</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

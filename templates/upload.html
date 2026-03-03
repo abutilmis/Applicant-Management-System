@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Upload Excel File</h1>
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Upload Applicants</div>
+            <div class="card-body">
+                <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="upload_type" value="applicant">
+                    <div class="mb-3">
+                        <label for="file_applicant" class="form-label">Excel file with applicant data</label>
+                        <input class="form-control" type="file" name="file" id="file_applicant" accept=".xlsx,.xls" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Upload Called Applicants</div>
+            <div class="card-body">
+                <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="upload_type" value="called">
+                    <div class="mb-3">
+                        <label for="file_called" class="form-label">Excel file with called applicants</label>
+                        <input class="form-control" type="file" name="file" id="file_called" accept=".xlsx,.xls" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning">Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">Upload Passed Applicants</div>
+            <div class="card-body">
+                <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data">
+                    <input type="hidden" name="upload_type" value="passed">
+                    <div class="mb-3">
+                        <label for="file_passed" class="form-label">Excel file with passed applicants</label>
+                        <input class="form-control" type="file" name="file" id="file_passed" accept=".xlsx,.xls" required>
+                    </div>
+                    <button type="submit" class="btn btn-success">Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

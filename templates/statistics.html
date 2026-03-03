@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Statistics</h1>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header">Overall Counts</div>
+            <div class="card-body">
+                <p>Total Applicants: {{ stats.total_applicants }}</p>
+                <p>Called for Interview: {{ stats.called }}</p>
+                <p>Passed for Work: {{ stats.passed }}</p>
+                <p>Call-to-Pass Ratio: {{ stats.called }} / {{ stats.passed }}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header">By Gender</div>
+            <div class="card-body">
+                <ul>
+                {% for gender, count in stats.by_gender.items() %}
+                    <li>{{ gender }}: {{ count }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header">By Job Position</div>
+            <div class="card-body">
+                <ul>
+                {% for job, count in stats.by_job.items() %}
+                    <li>{{ job }}: {{ count }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card mb-3">
+            <div class="card-header">By Region</div>
+            <div class="card-body">
+                <ul>
+                {% for region, count in stats.by_region.items() %}
+                    <li>{{ region }}: {{ count }}</li>
+                {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card mb-3">
+            <div class="card-header">Vacancy-Wise Summary</div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Job Title</th>
+                            <th>Total Applicants</th>
+                            <th>Called</th>
+                            <th>Passed</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for item in stats.vacancy_summary %}
+                        <tr>
+                            <td>{{ item.job }}</td>
+                            <td>{{ item.total }}</td>
+                            <td>{{ item.called }}</td>
+                            <td>{{ item.passed }}</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
