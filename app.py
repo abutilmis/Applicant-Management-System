@@ -1,7 +1,7 @@
 import os
 import uuid
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file
 from models import db, UploadBatch, Applicant, applicant_upload, Called, Passed
 from excel_service import ExcelService
 from deduplicator import Deduplicator
@@ -10,29 +10,27 @@ import pandas as pd
 import io
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///applicants.db'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'fallback-dev-key')
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///applicants.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['UPLOAD_FOLDER'] = 'uploads'
-
-db.init_app(app)
+app.config['UPLOAD_FOLDER'] = '/tmp/uploads'   # Render has writable /tmp
 
 # Ensure upload folder exists
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
+db.init_app(app)
+
 # ------------------------------
-# Presenter Routes
+# Presenter Routes (unchanged)
 # ------------------------------
 
 @app.route('/')
 def index():
-    """Dashboard with key statistics."""
     stats = StatsGenerator.get_dashboard_stats()
     return render_template('index.html', stats=stats)
 
 @app.route('/upload', methods=['GET', 'POST'])
 def upload():
-    """Handle file uploads for applicants, called, passed."""
     if request.method == 'POST':
         upload_type = request.form.get('upload_type')
         file = request.files.get('file')
@@ -43,48 +41,34 @@ def upload():
             flash('Please upload an Excel file (.xlsx or .xls)', 'danger')
             return redirect(request.url)
 
-        # Save temporary file
         filename = f"{uuid.uuid4()}_{file.filename}"
         filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
         file.save(filepath)
 
         try:
-            # Read Excel with pandas
             df = pd.read_excel(filepath, dtype=str)
-
-            # Normalize columns using the enhanced mapping
             df = ExcelService.normalize_columns(df)
-
-            # Check for required columns (using canonical names)
             expected_columns = ExcelService.CANONICAL_COLUMNS
             missing = set(expected_columns) - set(df.columns)
             if missing:
                 flash(f'Missing columns after mapping: {", ".join(missing)}', 'danger')
                 return redirect(request.url)
 
-            # Clean data (converts types, normalizes phones, etc.)
             df = ExcelService.clean_dataframe(df)
 
-            # Create upload batch record
             batch = UploadBatch(filename=file.filename, upload_type=upload_type)
             db.session.add(batch)
-            db.session.flush()  # to get batch.id
+            db.session.flush()
 
             if upload_type == 'applicant':
                 processed = 0
-                linked_applicant_ids = set()  # Track IDs already linked to this batch
-
+                linked_applicant_ids = set()
                 for _, row in df.iterrows():
-                    # Convert row to dict for deduplication
                     row_dict = row.to_dict()
-
-                    # Deduplicate
                     existing = Deduplicator.find_duplicate(row_dict)
-
                     if existing:
                         applicant = existing
                     else:
-                        # Create new applicant
                         applicant = Applicant(
                             serial=row_dict.get('ተራ ቁ'),
                             full_name=row_dict.get('ሙሉ ስም'),
@@ -108,10 +92,9 @@ def upload():
                             submission_status=row_dict.get('Submission Status')
                         )
                         db.session.add(applicant)
-                        db.session.flush()  # get applicant.id
+                        db.session.flush()
                         processed += 1
 
-                    # Link applicant to batch only if not already linked
                     if applicant.id not in linked_applicant_ids:
                         db.session.execute(applicant_upload.insert().values(
                             applicant_id=applicant.id,
@@ -156,7 +139,6 @@ def upload():
             db.session.rollback()
             flash(f'Error processing file: {str(e)}', 'danger')
         finally:
-            # Remove temp file
             os.remove(filepath)
 
         return redirect(url_for('index'))
@@ -165,8 +147,6 @@ def upload():
 
 @app.route('/applicants')
 def applicants():
-    """View master applicant list with filters."""
-    # Get filter parameters
     filters = {
         'job_title': request.args.get('job_title'),
         'region': request.args.get('region'),
@@ -181,12 +161,8 @@ def applicants():
     }
     filters = {k: v for k, v in filters.items() if v}
 
-    # Base query
     query = Applicant.query
-
-    # Apply filters
     if 'job_title' in filters:
-        # Use exact match for dropdown, but keep ilike for flexibility
         query = query.filter(Applicant.job_title.ilike(f"%{filters['job_title']}%"))
     if 'region' in filters:
         query = query.filter(Applicant.region == filters['region'])
@@ -210,8 +186,6 @@ def applicants():
         query = query.filter(Applicant.submission_create_date <= filters['date_to'])
 
     applicants_list = query.all()
-
-    # Get distinct job titles for dropdown
     distinct_jobs = db.session.query(Applicant.job_title.distinct()).filter(Applicant.job_title.isnot(None)).all()
     job_titles = [job[0] for job in distinct_jobs if job[0]]
 
@@ -219,13 +193,11 @@ def applicants():
 
 @app.route('/statistics')
 def statistics():
-    """Display all statistics."""
     stats = StatsGenerator.get_all_stats()
     return render_template('statistics.html', stats=stats)
 
 @app.route('/export')
 def export():
-    """Export data based on type."""
     export_type = request.args.get('type', 'master')
     if export_type == 'master':
         query = Applicant.query
@@ -237,10 +209,9 @@ def export():
         query = Applicant.query.filter(Applicant.is_passed == True)
         filename = 'passed_applicants.xlsx'
     elif export_type == 'filtered':
-        # Rebuild filter from request.args (simplified for brevity)
-        filters = request.args.to_dict()
+        # rebuild filter from request.args – simplified for brevity
+        # you may reuse the same logic as in /applicants
         query = Applicant.query
-        # Apply filters (same as in applicants route) – omitted for brevity
         filename = 'filtered_applicants.xlsx'
     else:
         return "Invalid export type", 400
@@ -255,7 +226,6 @@ def export():
 
 @app.route('/manage', methods=['POST'])
 def manage_database():
-    """Handle database management actions."""
     action = request.form.get('action')
     if action == 'refresh':
         flash('Data refreshed', 'success')
@@ -311,4 +281,4 @@ def manage_database():
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(debug=False)   # debug must be False in production
