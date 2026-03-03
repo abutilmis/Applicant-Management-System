@@ -12,7 +12,7 @@ class UploadBatch(db.Model):
     __tablename__ = 'upload_batch'
     id = db.Column(db.Integer, primary_key=True)
     filename = db.Column(db.String(200), nullable=False)
-    upload_type = db.Column(db.String(20), nullable=False)  # 'applicant', 'called', 'passed'
+    upload_type = db.Column(db.String(20), nullable=False)
     uploaded_at = db.Column(db.DateTime, default=db.func.current_timestamp())
 
 class Applicant(db.Model):
@@ -20,23 +20,23 @@ class Applicant(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     serial = db.Column(db.String(50))
     full_name = db.Column(db.String(200))
-    labor_id = db.Column(db.String(50), unique=False)   # or just omit unique=True
+    labor_id = db.Column(db.String(50))
     age = db.Column(db.Integer)
-    gender = db.Column(db.String(10))
+    gender = db.Column(db.String(20))
     region = db.Column(db.String(100))
     experience_years = db.Column(db.Float)
     phone = db.Column(db.String(50))
     alt_phone = db.Column(db.String(50))
     passport = db.Column(db.String(50))
-    job_title = db.Column(db.String(200))
+    job_title = db.Column(db.String(300))        # Increased for long job titles
     education_level = db.Column(db.String(100))
     education_field = db.Column(db.String(200))
-    experience_description = db.Column(db.Text)
-    education_document = db.Column(db.String(200))
-    cv_file = db.Column(db.String(200))
-    passport_file = db.Column(db.String(200))
+    experience_description = db.Column(db.Text)  # Changed to Text (unlimited)
+    education_document = db.Column(db.Text)      # Changed to Text for multiple URLs
+    cv_file = db.Column(db.Text)                 # Changed to Text for long URLs
+    passport_file = db.Column(db.Text)           # Changed to Text for long URLs
     submission_id = db.Column(db.String(100))
-    submission_create_date = db.Column(db.String(20))  # store as string, can be parsed later
+    submission_create_date = db.Column(db.String(30))
     submission_status = db.Column(db.String(50))
 
     is_called = db.Column(db.Boolean, default=False)
@@ -45,7 +45,6 @@ class Applicant(db.Model):
     created_at = db.Column(db.DateTime, default=db.func.current_timestamp())
     updated_at = db.Column(db.DateTime, default=db.func.current_timestamp(), onupdate=db.func.current_timestamp())
 
-    # Relationships
     upload_batches = db.relationship('UploadBatch', secondary=applicant_upload, backref=db.backref('applicants', lazy='dynamic'))
     called_records = db.relationship('Called', backref='applicant', lazy=True)
     passed_records = db.relationship('Passed', backref='applicant', lazy=True)
