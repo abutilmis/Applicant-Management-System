@@ -19,6 +19,10 @@ app.config['UPLOAD_FOLDER'] = '/tmp/uploads'   # Render has writable /tmp
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 
 db.init_app(app)
+with app.app_context():
+    print("Creating database tables...")
+    db.create_all()
+    print("Tables created successfully (or already exist).")
 
 # ------------------------------
 # Presenter Routes (unchanged)
@@ -282,3 +286,4 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=False)   # debug must be False in production
+
