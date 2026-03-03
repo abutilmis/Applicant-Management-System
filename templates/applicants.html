@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Applicant List</h1>
+
+<!-- Filter Form -->
+<div class="card mb-4">
+    <div class="card-header">Filter Applicants</div>
+    <div class="card-body">
+        <form method="get" action="{{ url_for('applicants') }}">
+            <div class="row">
+                <div class="col-md-3 mb-2">
+                    <select name="job_title" class="form-select">
+                        <option value="">All Job Titles</option>
+                        {% for job in job_titles %}
+                        <option value="{{ job }}" {% if filters.get('job_title') == job %}selected{% endif %}>{{ job }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <input type="text" name="region" class="form-control" placeholder="Region" value="{{ filters.get('region', '') }}">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <select name="gender" class="form-select">
+                        <option value="">All Genders</option>
+                        <option value="ወንድ" {% if filters.get('gender') == 'ወንድ' %}selected{% endif %}>Male</option>
+                        <option value="ሴት" {% if filters.get('gender') == 'ሴት' %}selected{% endif %}>Female</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <input type="text" name="education_level" class="form-control" placeholder="Education Level" value="{{ filters.get('education_level', '') }}">
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 mb-2">
+                    <input type="number" name="experience_min" class="form-control" placeholder="Min Experience (years)" value="{{ filters.get('experience_min', '') }}">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <input type="number" name="experience_max" class="form-control" placeholder="Max Experience (years)" value="{{ filters.get('experience_max', '') }}">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <select name="called" class="form-select">
+                        <option value="">Called Status</option>
+                        <option value="true" {% if filters.get('called') == 'true' %}selected{% endif %}>Called</option>
+                        <option value="false" {% if filters.get('called') == 'false' %}selected{% endif %}>Not Called</option>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                    <select name="passed" class="form-select">
+                        <option value="">Passed Status</option>
+                        <option value="true" {% if filters.get('passed') == 'true' %}selected{% endif %}>Passed</option>
+                        <option value="false" {% if filters.get('passed') == 'false' %}selected{% endif %}>Not Passed</option>
+                    </select>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 mb-2">
+                    <input type="date" name="date_from" class="form-control" placeholder="From Date" value="{{ filters.get('date_from', '') }}">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <input type="date" name="date_to" class="form-control" placeholder="To Date" value="{{ filters.get('date_to', '') }}">
+                </div>
+                <div class="col-md-6 mb-2">
+                    <button type="submit" class="btn btn-primary">Apply Filters</button>
+                    <a href="{{ url_for('applicants') }}" class="btn btn-secondary">Clear</a>
+                    <a href="{{ url_for('export', type='filtered', **filters) }}" class="btn btn-success">Export Filtered</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Applicants Table -->
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Serial</th>
+                <th>Full Name</th>
+                <th>Job Applied</th>
+                <th>Sex</th>
+                <th>Phone</th>
+                <th>Submission Date</th>
+                <th>Called</th>
+                <th>Passed</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for app in applicants %}
+            <tr>
+                <td>{{ app.serial }}</td>
+                <td>{{ app.full_name }}</td>
+                <td>{{ app.job_title }}</td>
+                <td>{{ app.gender }}</td>
+                <td>{{ app.phone }}</td>
+                <td>{{ app.submission_create_date }}</td>
+                <td>{% if app.is_called %}✅{% else %}❌{% endif %}</td>
+                <td>{% if app.is_passed %}✅{% else %}❌{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
